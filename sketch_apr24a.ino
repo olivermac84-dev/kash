@@ -8,7 +8,7 @@
 #define TFT_CS   7  
 #define TFT_DC   5  
 #define TFT_RST  4
-#define BLK_PIN  6   // Backlight control (PWM)
+#define BLK_PIN  6   // (PWM)
 #define NEXT_BTN 15
 #define PREV_BTN 14 
 
@@ -18,9 +18,9 @@ int currentIndex = 0;
 const int totalImages = 6; 
 const uint16_t* album[] = {image1, image2, image3, image4, image5, image6};
 
-// Timer variables
+
 unsigned long lastActivityTime = 0;
-const unsigned long dimDelay = 120000; // විනාඩි 2 (120,000 milliseconds)
+const unsigned long dimDelay = 120000; 
 bool isDimmed = false;
 
 void setup() {
@@ -31,21 +31,21 @@ void setup() {
   pinMode(PREV_BTN, INPUT_PULLUP);
   pinMode(BLK_PIN, OUTPUT);
   
-  analogWrite(BLK_PIN, 255); // ආරම්භයේදී උපරිම දීප්තිය
+  analogWrite(BLK_PIN, 255); 
 
   tft.begin(24000000); 
   tft.setRotation(0);
   
   runStartupAnimation(); 
-  lastActivityTime = millis(); // කාලය මැනීම ආරම්භ කරන්න
+  lastActivityTime = millis(); 
 }
 
 void loop() {
   unsigned long currentTime = millis();
 
-  // --- NEXT BUTTON ---
+  
   if (digitalRead(NEXT_BTN) == LOW) {
-    resetDimming(); // Button එක එබූ නිසා දීප්තිය වැඩි කරන්න
+    resetDimming(); 
     currentIndex++;
     if (currentIndex >= totalImages) currentIndex = 0;
     showImage();
@@ -54,16 +54,16 @@ void loop() {
 
   // --- PREVIOUS BUTTON ---
   if (digitalRead(PREV_BTN) == LOW) {
-    resetDimming(); // Button එක එබූ නිසා දීප්තිය වැඩි කරන්න
+    resetDimming(); 
     currentIndex--;
     if (currentIndex < 0) currentIndex = totalImages - 1;
     showImage();
     delay(300);
   }
 
-  // --- AUTO DIM LOGIC (විනාඩි 2ක් පසුව) ---
+  
   if (!isDimmed && (currentTime - lastActivityTime > dimDelay)) {
-    analogWrite(BLK_PIN, 20); // දීප්තිය ගොඩක් අඩු කරන්න (20/255)
+    analogWrite(BLK_PIN, 20); 
     isDimmed = true;
   }
 }
@@ -71,7 +71,7 @@ void loop() {
 // දීප්තිය නැවත වැඩි කරන Function එක
 void resetDimming() {
   analogWrite(BLK_PIN, 255); 
-  lastActivityTime = millis(); // කාලය අලුතින් මැනීම අරඹන්න
+  lastActivityTime = millis(); 
   isDimmed = false;
 }
 
