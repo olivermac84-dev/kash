@@ -4,13 +4,13 @@
 #include <math.h>
 #include "image_data.h"
 
-// Pin අර්ථ දැක්වීම්
-#define TFT_CS   7  
-#define TFT_DC   5  
-#define TFT_RST  4
-#define BLK_PIN  6   // Backlight control (PWM)
-#define NEXT_BTN 15
-#define PREV_BTN 14 
+
+#define TFT_CS    7  
+#define TFT_DC    5  
+#define TFT_RST   4
+#define BLK_PIN   13   // Backlight පාලනය සඳහා GPIO 13 භාවිතා කරයි
+#define NEXT_BTN  15
+#define PREV_BTN  14 
 
 Adafruit_GC9A01A tft = Adafruit_GC9A01A(TFT_CS, TFT_DC, TFT_RST);
 
@@ -18,10 +18,9 @@ int currentIndex = 0;
 const int totalImages = 6; 
 const uint16_t* album[] = {image1, image2, image3, image4, image5, image6};
 
-// Timer variables
+
 unsigned long lastActivityTime = 0;
-const unsigned long dimDelay = 120000; // විනාඩි 2 (120,000 milliseconds)
-bool isDimmed = false;
+const unsigned long screenOffDelay = 120000; 
 
 void setup() {
   SPI.setSCK(2);
@@ -31,48 +30,58 @@ void setup() {
   pinMode(PREV_BTN, INPUT_PULLUP);
   pinMode(BLK_PIN, OUTPUT);
   
-  analogWrite(BLK_PIN, 255); // ආරම්භයේදී උපරිම දීප්තිය
+ 
+  digitalWrite(BLK_PIN, HIGH); 
 
   tft.begin(24000000); 
   tft.setRotation(0);
   
   runStartupAnimation(); 
-  lastActivityTime = millis(); // කාලය මැනීම ආරම්භ කරන්න
+  lastActivityTime = millis(); 
 }
 
 void loop() {
   unsigned long currentTime = millis();
 
-  // --- NEXT BUTTON ---
+ 
   if (digitalRead(NEXT_BTN) == LOW) {
-    resetDimming(); // Button එක එබූ නිසා දීප්තිය වැඩි කරන්න
-    currentIndex++;
-    if (currentIndex >= totalImages) currentIndex = 0;
-    showImage();
+    if (isDisplayOff) {
+      wakeUpDisplay();
+    } else {
+      currentIndex++;
+      if (currentIndex >= totalImages) currentIndex = 0;
+      showImage();
+      lastActivityTime = currentTime; 
+    }
     delay(300);
   }
 
-  // --- PREVIOUS BUTTON ---
+ 
   if (digitalRead(PREV_BTN) == LOW) {
-    resetDimming(); // Button එක එබූ නිසා දීප්තිය වැඩි කරන්න
-    currentIndex--;
-    if (currentIndex < 0) currentIndex = totalImages - 1;
-    showImage();
+    if (isDisplayOff) {
+      wakeUpDisplay();
+    } else {
+      currentIndex--;
+      if (currentIndex < 0) currentIndex = totalImages - 1;
+      showImage();
+      lastActivityTime = currentTime; 
+    }
     delay(300);
   }
 
-  // --- AUTO DIM LOGIC (විනාඩි 2ක් පසුව) ---
-  if (!isDimmed && (currentTime - lastActivityTime > dimDelay)) {
-    analogWrite(BLK_PIN, 20); // දීප්තිය ගොඩක් අඩු කරන්න (20/255)
-    isDimmed = true;
+  \
+  if (!isDisplayOff && (currentTime - lastActivityTime > screenOffDelay)) {
+    digitalWrite(BLK_PIN, LOW);
+    isDisplayOff = true;
   }
 }
 
-// දීප්තිය නැවත වැඩි කරන Function එක
-void resetDimming() {
-  analogWrite(BLK_PIN, 255); 
-  lastActivityTime = millis(); // කාලය අලුතින් මැනීම අරඹන්න
-  isDimmed = false;
+
+void wakeUpDisplay() {
+  digitalWrite(BLK_PIN, HIGH); 
+  isDisplayOff = false;
+  lastActivityTime = millis();
+  showImage();
 }
 
 void runStartupAnimation() {
